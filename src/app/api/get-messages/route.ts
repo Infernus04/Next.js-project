@@ -5,6 +5,7 @@ import UserModel from "@/models/User";
 import { User } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/option";
 import mongoose from "mongoose";
+import { setUncaughtExceptionCaptureCallback } from "process";
 
 export async function GET(request : Request){
     await dbConnect()
@@ -43,6 +44,12 @@ export async function GET(request : Request){
         },{status : 200})
 
       } catch (error) {
-        
+        console.log("An unexpected error occured")
+        return Response.json(
+            {
+                success : false,
+                message : "Not Authenticated"
+            },{status : 500}
+        )
       }
 }
