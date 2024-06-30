@@ -1,19 +1,59 @@
-"use client"
-import {useSession, signIn, signOut} from "next-auth/react"
-export default function Component(){
-const {data : session} = useSession()
+"use client";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { useDebounceValue } from "usehooks-ts";
+import { useToast } from "@/components/ui/use-toast";
+import { useRouter } from "next/router";
+import { signUpSchema } from "@/schemas/signUpSchema";
+import axios, { AxiosError } from "axios";
+import { ApiResponse } from "@/types/ApiResponse";
 
-if(session){
-  return (
-    <>
-    Signed in as {session.user.email} <br/>
-    <button onClick={() => signOut()}>Sign Out</button>
-    </>
-  )
+function page() {
+  const [username, setUsername] = useState("");
+  const [usernameMessage, setusernameMessage] = useState("");
+  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const debouncedUsername = useDebounceValue(username, 300);
+  const { toast } = useToast();
+  const router = useRouter();
+
+  //zod implementation
+  const form = useForm<z.infer<typeof signUpSchema>>({
+    resolver: zodResolver(signUpSchema),
+    defaultValues: {
+      username: "",
+      email: "",
+      password: "",
+    },
+  });
+
+  useEffect(() => {
+    const checkUsernameUnique = async () => {
+      if (debouncedUsername) {
+        setIsCheckingUsername(true);
+        setusernameMessage("");
+        try {
+          const response = await axios.get(
+            `/api/username-uniqueness? username=${debouncedUsername}`
+          );
+          setusernameMessage(response.data.message);
+        } catch (error) {
+          const axiosError = error as AxiosError<ApiResponse>;
+          setusernameMessage(
+            axiosError.response?.data.message ?? "Error checking username"
+          );
+        } finally {
+          setIsCheckingUsername(false);
+        }
+      }
+    };
+    checkUsernameUnique();
+  }, [debouncedUsername]);
+
+  return <div>Page</div>;
 }
-return (
-  <>
-  Not signed in <br/>
-  <button className="bg-orange-400 px-3 py-1 m-4 rounded-md" onClick={() => signIn()}>Sign in</button>
-  </>
-)}
+
+export default page;
