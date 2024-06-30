@@ -10,6 +10,7 @@ import { useRouter } from "next/router";
 import { signUpSchema } from "@/schemas/signUpSchema";
 import axios, { AxiosError } from "axios";
 import { ApiResponse } from "@/types/ApiResponse";
+import { title } from "process";
 
 function page() {
   const [username, setUsername] = useState("");
@@ -53,7 +54,40 @@ function page() {
     checkUsernameUnique();
   }, [debouncedUsername]);
 
-  return <div>Page</div>;
+  const onShubmit = async (data: z.infer<typeof signUpSchema>) => {
+    setIsSubmitting(true);
+    try {
+      const response = await axios.post<ApiResponse>("/api/sign-up", data);
+      toast({
+        title : "Success",
+        description : response.data.message
+      });
+      router.replace(`/verify/${username}`)
+      setIsSubmitting(false)
+    } catch (error) {
+      console.error("Error in signup of user" , error)
+      const axiosError = error as AxiosError<ApiResponse>;
+      let errorMessage = axiosError.response?.data.message
+      toast({
+        title : "SignUp failed",
+        description : errorMessage,
+        variant : "destructive" 
+      })
+      setIsSubmitting(false)
+    }
+  };
+  return <div className="flex justify-center items-center min-h-screen">
+     <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-md">
+      <div className="text-center">
+        <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl mb-6">
+        Join Mystery message
+        </h1>
+        <p className="mb-4">
+          Sign Up to start your anomynous adventure
+        </p>
+      </div>
+     </div>
+  </div>;
 }
 
 export default page;
