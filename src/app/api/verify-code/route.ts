@@ -17,7 +17,7 @@ export async function POST(request: Request) {
           success: false,
           message: "user not found",
         },
-        { status: 500 }
+        { status: 404}
       );
     }
 
